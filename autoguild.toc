@@ -1,0 +1,16 @@
+## Interface: @toc-version-retail@
+## Interface-Retail: @toc-version-retail@
+## Interface-Classic: @toc-version-classic@
+## Interface-BCC: @toc-version-bcc@
+## Title: Autoguild
+## Notes: Automatically advertise, invite, set notes, and guild roles for prospective guildmates who whisper you
+## Author: Based64God
+## Version: @project-version@
+## SavedVariables: AGDB
+# TODO
+## X-Curse-Project-ID: 
+
+libs\embeds.xml
+
+autoguild.lua
+config.lua
