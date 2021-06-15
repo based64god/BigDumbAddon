@@ -45,10 +45,6 @@ end
 -- CUSTOM HANDLES
 -- 
 
-function BDA:Spam(delay, message, channels)
-
-end
-
 -- RespondWithErrorData(string, string) takes a message and a player and sends them a generic error message.
 function BDA:RespondWithErrorData(message, player)
     SendChatMessage(string.format("Hi. You sent a message my addon couldn't handle. You sent \"%s\" and I was expecting \"inv SPEC CLASS\" or \"ginv SPEC CLASS PROF1 PROF2\"", tostring(message)), "WHISPER", nil, player)
@@ -248,30 +244,6 @@ function BDA:OnInitialize()
         handler = BDA,
         type = 'group',
         args = {
-            advert = {
-                type = "input",
-                name = "Content to advertise",
-                desc = string.format("Content to spam.\nCurrently: \"%s\".\n\n", BDADB.adContent),
-                usage = "<message>",
-                get = "GetAdContent",
-                set = "SetAdContent",
-            },
-            channels = {
-                type = "input",
-                name = "Channel names used to advertise (IE, general, trade, lookingforgroup)",
-                desc = string.format("Channel names used to spam.\nCurrently: %s.\n\n", table.concat(BDADB.adChannels)),
-                usage = "<channel1 [channel2...]>",
-                get = "GetAdChannels",
-                set = "SetAdChannels",
-            },
-            delay = {
-                type = "input",
-                name = "Delay time between adverts in seconds.",
-                desc = string.format("Default advertising delay time in seconds.\nCurrently: %s.\n\n", BDADB.adDelayTime),
-                usage = "<time in seconds>",
-                get = "GetAdDelay",
-                set = "SetAdDelay",
-            },
             purge = {
                 type = "input",
                 name = "Purge Window",
@@ -288,22 +260,6 @@ function BDA:OnInitialize()
                 cmdHidden = true,
                 get = "GetDebug",
                 set = "SetDebug",
-            },
-            spamOn = {
-                type = "input",
-                name = "Toggle advert spamming on",
-                desc = "Spams the content of `advert` to `channels` on `delay`",
-                usage = "<toggle spamming>",
-                get = "Spam",
-                set = "Spam",
-            },
-            spamOff = {
-                type = "input",
-                name = "Toggle advert spamming off",
-                desc = "Spams the content of `advert` to `channels` on `delay`",
-                usage = "<toggle spamming>",
-                get = "SpamOff",
-                set = "SpamOff",
             },
         }
     }
@@ -384,20 +340,6 @@ function BDA:OnInitialize()
         end
         self:WhisperHandler(true, text, playerName, guid)
     end)
-
-    self:RegisterEvent("CHAT_MSG_CHANNEL", function(event, text, playerName, languageName,
-        channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
-        unused, lineID, guid, bnSenderID, isMobile, isSubtitle, hideSenderInLetterbox, suppressRaidIcons)
-    if (not BDADB.advertising) then
-        return
-    end
-    if (BDADB.debugLogging) then
-        self:Print("---DEBUGGING---\n", event, text, playerName, languageName,
-        channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
-        unused, lineID, guid, bnSenderID, isMobile, isSubtitle, hideSenderInLetterbox, suppressRaidIcons)
-    end
-    self:Spam(BDADB.adDelayTime, BDADB.adContent, BDADB.adChannels)
-end)
 end
 
 function BDA:OnEnable()
