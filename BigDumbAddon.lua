@@ -363,6 +363,7 @@ function BDA:OnEnable()
         "available on the 5G network",
         "needs Jesus",
         "built different",
+        "now supports Skyrim Special Edition",
     }
     self:Print("See /bda for details")
     self:Print(flavor[math.random(#flavor)])
