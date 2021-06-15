@@ -83,7 +83,7 @@ function BDA:ProcessGuildInvite(query, player)
         if (dialog) then
             dialog.data = player
         end
-        Timer(10, self:SetGuildNote(player, classSpecProfs))
+        Timer(10, function() self:SetGuildNote(player, classSpecProfs) end)
     end
 end
 
@@ -299,7 +299,7 @@ function BDA:OnInitialize()
             GuildInvite(characterName)
         end,
         OnCancel = function() end,
-        timeout = 0,
+        timeout = 5,
         whileDead = true,
         hideOnEscape = true,
         preferredIndex = 3,
@@ -313,7 +313,7 @@ function BDA:OnInitialize()
             PartyInvite(characterName)
         end,
         OnCancel = function() end,
-        timeout = 0,
+        timeout = 5,
         whileDead = true,
         hideOnEscape = true,
         preferredIndex = 3,
