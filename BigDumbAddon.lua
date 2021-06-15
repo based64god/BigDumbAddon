@@ -10,9 +10,10 @@ local StaticPopup_Show = _G.StaticPopup_Show
 local GetGuildRosterInfo = _G.GetGuildRosterInfo
 local GetNumGuildMembers = _G.GetNumGuildMembers
 local GuildRosterSetPublicNote = _G.GuildRosterSetPublicNote
--- local GetChannelName = _G.GetChannelName
+local GetChannelName = _G.GetChannelName
 local SendChatMessage = _G.SendChatMessage
 local Timer = _G.C_Timer.After
+local Ticker = _G.C_Timer.NewTicker
 
 
 local addonName = "BigDumbAddon"
@@ -44,14 +45,8 @@ end
 -- CUSTOM HANDLES
 -- 
 
--- StartSpam()
-function BDA:StartSpam()
-    
-end
+function BDA:Spam(delay, message, channels)
 
--- StopSpam
-function BDA:StopSpam()
-    
 end
 
 -- RespondWithErrorData(string, string) takes a message and a player and sends them a generic error message.
@@ -62,7 +57,7 @@ end
 -- 
 function BDA:SetGuildNote(player, note)
     local index = self:FindGuildIndex(player)
-    if (index == -1) then 
+    if (index == -1) then
         self:Print("Player", player, "not found.")
         return
     end
@@ -231,7 +226,6 @@ function BDA:OnInitialize()
     BDADB.adChannels = BDADB.adChannels or {"general"}
     BDADB.debugLogging = BDADB.debugLogging or false
     BDADB.advertising = BDADB.advertising or false
-    BDADB.cancelAdvertHandle = self:StopSpam()
     BDADB.defaults = {
         ginv = {
             ginv = true,
@@ -296,18 +290,20 @@ function BDA:OnInitialize()
                 set = "SetDebug",
             },
             spamOn = {
-                type = "execute",
+                type = "input",
                 name = "Toggle advert spamming on",
                 desc = "Spams the content of `advert` to `channels` on `delay`",
                 usage = "<toggle spamming>",
-                func = self:StartSpam()
+                get = "Spam",
+                set = "Spam",
             },
             spamOff = {
-                type = "execute",
+                type = "input",
                 name = "Toggle advert spamming off",
                 desc = "Spams the content of `advert` to `channels` on `delay`",
                 usage = "<toggle spamming>",
-                func = self:StopSpam()
+                get = "SpamOff",
+                set = "SpamOff",
             },
         }
     }
@@ -316,7 +312,7 @@ function BDA:OnInitialize()
         text = "Do you want to invite %s to your guild (they appear to be a %s)?",
         button1 = "Yes",
         button2 = "No",
-        OnAccept = function(_, characterName, data)
+        OnAccept = function(_, characterName)
             GuildInvite(characterName)
         end,
         OnCancel = function() end,
@@ -330,7 +326,7 @@ function BDA:OnInitialize()
         text = "Do you want to invite %s to your party/raid (they appear to be a %s)?",
         button1 = "Yes",
         button2 = "No",
-        OnAccept = function(_, characterName, classSpec)
+        OnAccept = function(_, characterName)
             PartyInvite(characterName)
         end,
         OnCancel = function() end,
@@ -340,11 +336,6 @@ function BDA:OnInitialize()
         preferredIndex = 3,
     }
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options, {"bda"})
-
-    -- Start back up if user was spamming when they logged out
-    if BDADB.advertising then
-        self:StartSpamming()
-    end
 
     self:RegisterEvent("CHAT_MSG_BN_WHISPER", function(event, text, playerName, languageName,
             channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
@@ -357,6 +348,7 @@ function BDA:OnInitialize()
         end
         self:BNWhisperHandler(false, text, playerName, guid, bnSenderID)
     end)
+
     self:RegisterEvent("CHAT_MSG_BN_WHISPER_INFORM", function(event, text, playerName, languageName,
             channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
             unused, lineID, guid, bnSenderID, isMobile, isSubtitle, hideSenderInLetterbox, suppressRaidIcons)
@@ -368,6 +360,7 @@ function BDA:OnInitialize()
         end
         self:BNWhisperHandler(true, text, playerName, guid, bnSenderID)
     end)
+
     self:RegisterEvent("CHAT_MSG_WHISPER", function(event, text, playerName, languageName,
             channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
             unused, lineID, guid, bnSenderID, isMobile, isSubtitle, hideSenderInLetterbox, suppressRaidIcons)
@@ -379,6 +372,7 @@ function BDA:OnInitialize()
         end
         self:WhisperHandler(false, text, playerName, guid)
     end)
+
     self:RegisterEvent("CHAT_MSG_WHISPER_INFORM", function(event, text, playerName, languageName,
             channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
             unused, lineID, guid, bnSenderID, isMobile, isSubtitle, hideSenderInLetterbox, suppressRaidIcons)
@@ -391,6 +385,19 @@ function BDA:OnInitialize()
         self:WhisperHandler(true, text, playerName, guid)
     end)
 
+    self:RegisterEvent("CHAT_MSG_CHANNEL", function(event, text, playerName, languageName,
+        channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
+        unused, lineID, guid, bnSenderID, isMobile, isSubtitle, hideSenderInLetterbox, suppressRaidIcons)
+    if (not BDADB.advertising) then
+        return
+    end
+    if (BDADB.debugLogging) then
+        self:Print("---DEBUGGING---\n", event, text, playerName, languageName,
+        channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
+        unused, lineID, guid, bnSenderID, isMobile, isSubtitle, hideSenderInLetterbox, suppressRaidIcons)
+    end
+    self:Spam(BDADB.adDelayTime, BDADB.adContent, BDADB.adChannels)
+end)
 end
 
 function BDA:OnEnable()
@@ -401,9 +408,22 @@ function BDA:OnEnable()
         "thinks Nathan is small",
         "has the VTEC",
         "busy playing Battlefield",
+        "Chris' other gay mom",
+        "still isn't attuned",
+        "wonders when Zack will stop showing up to raid",
+        "Chinese malware",
+        "now with extra Kratom",
+        "secretly packed with intrusive homoerotic thoughts",
+        "Emmett's boyfriend",
+        "made from the blood of dead memes",
+        "Space Monke will rise again",
+        "on the front page of /r/ambien",
+        "available on the 5G network",
+        "needs Jesus",
+        "built different",
     }
     self:Print("See /bda for details")
-    self:Print(flavor[ math.random( #flavor ) ])
+    self:Print(flavor[math.random(#flavor)])
 end
 
 function BDA:OnDisable()
