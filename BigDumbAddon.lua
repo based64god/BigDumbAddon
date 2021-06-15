@@ -44,9 +44,19 @@ end
 -- CUSTOM HANDLES
 -- 
 
+-- StartSpam()
+function BDA:StartSpam()
+    
+end
+
+-- StopSpam
+function BDA:StopSpam()
+    
+end
+
 -- RespondWithErrorData(string, string) takes a message and a player and sends them a generic error message.
 function BDA:RespondWithErrorData(message, player)
-    SendChatMessage(string.format("Hi. You sent a message my addon couldn't handle. You sent \"%s\" and I was expecting \"inv CLASS SPEC\" or \"ginv CLASS SPEC PROF1 PROF2\"", tostring(message)), "WHISPER", nil, player)
+    SendChatMessage(string.format("Hi. You sent a message my addon couldn't handle. You sent \"%s\" and I was expecting \"inv SPEC CLASS\" or \"ginv SPEC CLASS PROF1 PROF2\"", tostring(message)), "WHISPER", nil, player)
 end
 
 -- 
@@ -117,6 +127,9 @@ function BDA:ProcessMessage(outgoing, message, playerName, guid)
         return
     elseif (#message == 3) then
         self:ProcessRaidInvite(message, playerName)
+        return
+    elseif (#message == 1) then
+        self:ProcessInfoRequest(message, playerName)
         return
     end
     self:RespondWithErrorData(message, playerName)
@@ -217,6 +230,8 @@ function BDA:OnInitialize()
     BDADB.adDelayTime = BDADB.adDelayTime or 15
     BDADB.adChannels = BDADB.adChannels or {"general"}
     BDADB.debugLogging = BDADB.debugLogging or false
+    BDADB.advertising = BDADB.advertising or false
+    BDADB.cancelAdvertHandle = self:StopSpam()
     BDADB.defaults = {
         ginv = {
             ginv = true,
@@ -280,14 +295,20 @@ function BDA:OnInitialize()
                 get = "GetDebug",
                 set = "SetDebug",
             },
-            spam = {
-                type = "input",
-                name = "Toggle advert spamming",
+            spamOn = {
+                type = "execute",
+                name = "Toggle advert spamming on",
                 desc = "Spams the content of `advert` to `channels` on `delay`",
                 usage = "<toggle spamming>",
-                get = "GetSpam",
-                set = "SetSpam",
-            }
+                func = self:StartSpam()
+            },
+            spamOff = {
+                type = "execute",
+                name = "Toggle advert spamming off",
+                desc = "Spams the content of `advert` to `channels` on `delay`",
+                usage = "<toggle spamming>",
+                func = self:StopSpam()
+            },
         }
     }
 
@@ -320,6 +341,10 @@ function BDA:OnInitialize()
     }
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options, {"bda"})
 
+    -- Start back up if user was spamming when they logged out
+    if BDADB.advertising then
+        self:StartSpamming()
+    end
 
     self:RegisterEvent("CHAT_MSG_BN_WHISPER", function(event, text, playerName, languageName,
             channelName, playerName2, specialFlags, zoneChannelID, channelIndex, channelBaseName,
@@ -370,6 +395,15 @@ end
 
 function BDA:OnEnable()
     -- Called when the addon is enabled
+    local flavor = {
+        "hates vegans",
+        "now 76% bigger and dumber",
+        "thinks Nathan is small",
+        "has the VTEC",
+        "busy playing Battlefield",
+    }
+    self:Print("See /bda for details")
+    self:Print(flavor[ math.random( #flavor ) ])
 end
 
 function BDA:OnDisable()
